@@ -1,37 +1,43 @@
 #!/bin/bash
 
-# Function to log history of calculations
+# Simple calculator script
+
+# Function to log history
 log_history() {
-    local operand1=$1
-    local operator=$2
-    local operand2=$3
-    local result=$4
-    local timestamp=$(date '+%Y-%m-%d %H:%M:%S')
-    echo "$timestamp $operand1 $operator $operand2 = $result" >> history.txt
+  echo "$(date): $1 $2 $3 = $4" >> history.txt
 }
 
-# Sample calculation code (for demonstration)
-# Replace with actual calculation logic as needed
-read -p "Enter first operand: " operand1
-read -p "Enter operator (+, -, *, /): " operator
-read -p "Enter second operand: " operand2
+# Main calculation logic
+if [[ $# -ne 3 ]]; then
+  echo "Usage: ./calc.sh <num1> <operator> <num2>"
+  exit 1
+fi
 
-# Perform calculation
+num1=$1
+operator=$2
+num2=$3
+
 case $operator in
-    +)
-        result=$(echo "$operand1 + $operand2" | bc)
+  +)
+    result=$((num1 + num2))
     ;;
-    -)
-        result=$(echo "$operand1 - $operand2" | bc)
+  -)
+    result=$((num1 - num2))
     ;;
-    *)
-        echo "Invalid operator"
-        exit 1
+  \\*)
+    result=$((num1 * num2))
     ;;
- esac
+  /)
+    result=$((num1 / num2))
+    ;;
+  *)
+    echo "Unknown operator: $operator"
+    exit 1
+    ;;
+esac
 
 # Log the calculation
-log_history $operand1 $operator $operand2 $result
+log_history "$num1" "$operator" "$num2" "$result"
 
-# Output the result
+# Output result
 echo "Result: $result"
