@@ -7,9 +7,44 @@ log_history() {
   echo "$(date): $1 $2 $3 = $4" >> history.txt
 }
 
+# History view command: --history [N]
+if [[ "$1" == "--history" ]]; then
+  if [[ $# -gt 2 ]]; then
+    echo "Error: --history cannot be combined with calculation arguments"
+    exit 1
+  fi
+  if [[ ! -f history.txt || ! -s history.txt ]]; then
+    echo "No history yet."
+    exit 0
+  fi
+  if [[ -n "$2" ]]; then
+    if ! [[ "$2" =~ ^[0-9]+$ ]]; then
+      echo "Error: --history N requires a positive integer"
+      exit 1
+    fi
+    tail -n "$2" history.txt
+  else
+    cat history.txt
+  fi
+  exit 0
+fi
+
+# History clear command: --clear-history
+if [[ "$1" == "--clear-history" ]]; then
+  if [[ $# -gt 1 ]]; then
+    echo "Error: --clear-history cannot be combined with other arguments"
+    exit 1
+  fi
+  > history.txt
+  echo "History cleared."
+  exit 0
+fi
+
 # Main calculation logic
 if [[ $# -ne 3 ]]; then
   echo "Usage: ./calc.sh <num1> <operator> <num2>"
+  echo "       ./calc.sh --history [N]"
+  echo "       ./calc.sh --clear-history"
   exit 1
 fi
 
