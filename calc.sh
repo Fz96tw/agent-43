@@ -7,50 +7,44 @@ log_history() {
   echo "$(date): $1 = $2" >> history.txt
 }
 
-# Normalize bc output: add leading zero, strip trailing zeros
-normalize_result() {
-  echo "$1" | sed 's/^\./0./; s/^-\./-0./; s/\(\.[0-9]*[1-9]\)0*$/\1/; s/\.0*$//'
-}
-
-# Check for sine function input: sin( <number> ) with flexible whitespace
-if [[ $# -ge 1 ]]; then
-  # Reconstruct all args into one string to handle whitespace-split invocations
-  full_input="$*"
-
-  # Match sin(...) pattern
-  if [[ "$full_input" =~ ^[[:space:]]*sin[[:space:]]*\([[:space:]]*([^[:space:]]+)[[:space:]]*\)[[:space:]]*$ ]]; then
-    value="${BASH_REMATCH[1]}"
-
-    # Validate: must be a single valid number (integer or decimal, optional leading minus)
-    if ! [[ "$value" =~ ^-?[0-9]+(\.[0-9]+)?$ ]]; then
-      echo "Invalid input: '$value' is not a valid number"
-      exit 1
-    fi
-
-    # Compute sine using bc (input is degrees, convert to radians)
-    result=$(echo "scale=10; s($value * 4 * a(1) / 180)" | bc -l 2>/dev/null)
-    if [[ $? -ne 0 || -z "$result" ]]; then
-      echo "Error computing sine"
-      exit 1
-    fi
-
-    result=$(normalize_result "$result")
-    log_history "sin($value)" "$result"
-    echo "Result: $result"
-    exit 0
-  fi
-
-  # If input looks like it starts with sin but didn't match, it's malformed
-  if [[ "$full_input" =~ ^[[:space:]]*sin[[:space:]]*\( ]]; then
-    echo "Invalid input: expected sin(<number>)"
+# History view command: --history [N] (or --h [N])
+if [[ "$1" == "--history" || "$1" == "--h" ]]; then
+  if [[ $# -gt 2 ]]; then
+    echo "Error: --history/--h cannot be combined with calculation arguments"
     exit 1
   fi
+  if [[ ! -f history.txt || ! -s history.txt ]]; then
+    echo "No history yet."
+    exit 0
+  fi
+  if [[ -n "$2" ]]; then
+    if ! [[ "$2" =~ ^[0-9]+$ ]]; then
+      echo "Error: --history N requires a positive integer"
+      exit 1
+    fi
+    tail -n "$2" history.txt
+  else
+    cat history.txt
+  fi
+  exit 0
+fi
+
+# History clear command: --clear-history
+if [[ "$1" == "--clear-history" ]]; then
+  if [[ $# -gt 1 ]]; then
+    echo "Error: --clear-history cannot be combined with other arguments"
+    exit 1
+  fi
+  > history.txt
+  echo "History cleared."
+  exit 0
 fi
 
 # Main calculation logic
 if [[ $# -ne 3 ]]; then
   echo "Usage: ./calc.sh <num1> <operator> <num2>"
-  echo "       ./calc.sh \"sin(<num>)\""
+  echo "       ./calc.sh --history [N]  (or --h [N])"
+  echo "       ./calc.sh --clear-history"
   exit 1
 fi
 
