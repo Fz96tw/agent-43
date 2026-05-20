@@ -7,10 +7,10 @@ log_history() {
   echo "$(date): $1 = $2" >> history.txt
 }
 
-# History view command: --history [N] (or --h [N])
-if [[ "$1" == "--history" || "$1" == "--h" ]]; then
+# History view command: --history [N]
+if [[ "$1" == "--history" ]]; then
   if [[ $# -gt 2 ]]; then
-    echo "Error: --history/--h cannot be combined with calculation arguments"
+    echo "Error: --history cannot be combined with calculation arguments"
     exit 1
   fi
   if [[ ! -f history.txt || ! -s history.txt ]]; then
@@ -43,7 +43,7 @@ fi
 # Main calculation logic
 if [[ $# -ne 3 ]]; then
   echo "Usage: ./calc.sh <num1> <operator> <num2>"
-  echo "       ./calc.sh --history [N]  (or --h [N])"
+  echo "       ./calc.sh --history [N]"
   echo "       ./calc.sh --clear-history"
   exit 1
 fi
