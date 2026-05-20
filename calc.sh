@@ -4,7 +4,7 @@
 
 # Function to log history
 log_history() {
-  echo "$(date): $1 $2 $3 = $4" >> history.txt
+  echo "$(date): $1 = $2" >> history.txt
 }
 
 # History view command: --history [N] (or --h [N])
@@ -52,18 +52,32 @@ num1=$1
 operator=$2
 num2=$3
 
+# Validate both operands are numbers (integer or decimal, optional leading minus)
+if ! [[ "$num1" =~ ^-?[0-9]+(\.[0-9]+)?$ ]]; then
+  echo "Invalid input: '$num1' is not a valid number"
+  exit 1
+fi
+if ! [[ "$num2" =~ ^-?[0-9]+(\.[0-9]+)?$ ]]; then
+  echo "Invalid input: '$num2' is not a valid number"
+  exit 1
+fi
+
 case $operator in
   +)
-    result=$((num1 + num2))
+    result=$(echo "scale=10; $num1 + $num2" | bc -l)
     ;;
   -)
-    result=$((num1 - num2))
+    result=$(echo "scale=10; $num1 - $num2" | bc -l)
     ;;
-  \\*)
-    result=$((num1 * num2))
+  \*)
+    result=$(echo "scale=10; $num1 * $num2" | bc -l)
     ;;
   /)
-    result=$((num1 / num2))
+    if [[ "$num2" == "0" || "$num2" == "0.0" || "$num2" =~ ^-?0\.0+$ ]]; then
+      echo "Error: division by zero"
+      exit 1
+    fi
+    result=$(echo "scale=10; $num1 / $num2" | bc -l)
     ;;
   *)
     echo "Unknown operator: $operator"
@@ -71,8 +85,10 @@ case $operator in
     ;;
 esac
 
+result=$(normalize_result "$result")
+
 # Log the calculation
-log_history "$num1" "$operator" "$num2" "$result"
+log_history "$num1 $operator $num2" "$result"
 
 # Output result
 echo "Result: $result"
